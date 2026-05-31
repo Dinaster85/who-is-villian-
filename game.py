@@ -2,13 +2,14 @@ import pygame
 import os
 import random
 import math
+import resources
 
 pygame.init()
 pygame.mixer.init()
 
 BASE_DIR = os.path.dirname(__file__)
 
-shoot_sound = pygame.mixer.Sound(os.path.join(BASE_DIR, "shoot.mp3"))
+shoot_sound = resources.get_sound("shoot")
 
 #розмір вікна
 WIDTH, HEIGHT = 800, 600
@@ -24,34 +25,31 @@ clock = pygame.time.Clock()
 
 #створення гравця й ворогів
 player = pygame.Rect(400, 300, PLAYER_SIZE, PLAYER_SIZE)
-image_path = os.path.join(BASE_DIR, "alien.png")
-player_img = pygame.image.load(image_path).convert_alpha()
+player_img = resources.get_sprite("alien")
 player_img = pygame.transform.scale(player_img, (PLAYER_SIZE, PLAYER_SIZE))
 #Вороги
-enemy_img_path = os.path.join(BASE_DIR, "cosmoman.png")
-player_img_normal = pygame.image.load(os.path.join(BASE_DIR, "alien.png")).convert_alpha()
+player_img_normal = resources.get_sprite("alien")
 player_img_normal = pygame.transform.scale(player_img_normal, (PLAYER_SIZE, PLAYER_SIZE))
 
-player_img_enemy = pygame.image.load(os.path.join(BASE_DIR, "cosmoman.png")).convert_alpha()
+player_img_enemy = resources.get_sprite("cosmoman")
 player_img_enemy = pygame.transform.scale(player_img_enemy, (PLAYER_SIZE, PLAYER_SIZE))
-enemy_img = pygame.image.load(os.path.join(BASE_DIR, "cosmoman.png")).convert_alpha()
+enemy_img = resources.get_sprite("cosmoman")
 enemy_img = pygame.transform.scale(enemy_img, (ENEMY_SIZE, ENEMY_SIZE))
 
 #фон
-bg_path = os.path.join(BASE_DIR, "bg.png")  # имя картинки
-background = pygame.image.load(bg_path).convert()
+background = resources.get_image("bg")
 
-menu_bg1 = pygame.image.load(os.path.join(BASE_DIR, "menu1.png")).convert()
+menu_bg1 = resources.get_image("menu1")
 menu_bg1 = pygame.transform.scale(menu_bg1, (WIDTH, HEIGHT))
 
 
-menu_bg2 = pygame.image.load(os.path.join(BASE_DIR, "menu2.png")).convert()
+menu_bg2 = resources.get_image("menu2")
 menu_bg2 = pygame.transform.scale(menu_bg2, (WIDTH, HEIGHT))
 
-menu_bg3 = pygame.image.load(os.path.join(BASE_DIR, "menu3.png")).convert()
+menu_bg3 = resources.get_image("menu3")
 menu_bg3 = pygame.transform.scale(menu_bg3, (WIDTH, HEIGHT))
 
-menu_bg4 = pygame.image.load(os.path.join(BASE_DIR, "menu4.png")).convert()
+menu_bg4 = resources.get_image("menu4")
 menu_bg4 = pygame.transform.scale(menu_bg4, (WIDTH, HEIGHT))
 
 
@@ -306,7 +304,7 @@ while running:
         clock.tick(60)
         continue
 
-    #экран програшу
+    #Екран програшу
     if game_state == "game_over":
         screen.fill((0, 0, 0))
 
