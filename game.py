@@ -1,4 +1,5 @@
 import pygame
+from settings import *
 import os
 import random
 import math
@@ -10,15 +11,6 @@ pygame.mixer.init()
 BASE_DIR = os.path.dirname(__file__)
 
 shoot_sound = resources.get_sound("shoot")
-
-#розмір вікна
-WIDTH, HEIGHT = 800, 600
-
-#розмір гравця
-PLAYER_SIZE = 40
-
-#розмір ворога
-ENEMY_SIZE = 40
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -54,10 +46,7 @@ menu_bg4 = pygame.transform.scale(menu_bg4, (WIDTH, HEIGHT))
 
 
 #змінні
-dash_speed = 20
 dash_time = 0
-dash_duration = 10
-dash_cooldown = 0
 dash_cooldown_max = 0
 dash_dx, dash_dy = 0, 0
 game_over = False
@@ -76,8 +65,6 @@ target_size2 = 40
 
 #вороги
 enemies = []
-enemy_size = 40
-enemy_speed = 2
 
 #рестарт
 def reset_game():
@@ -91,13 +78,9 @@ def reset_game():
 
     player.center = (WIDTH // 2, HEIGHT // 2)
 
-#Швидкість
-speed = 5
-
 #снаряд
 bullets = []
 shoot_cooldown = 0
-shoot_delay = 15
 
 #напрямок снаряду
 direction_x = 0
@@ -138,7 +121,6 @@ TEXT = {
 
 #частота спавну ворогів
 spawn_timer = 0
-spawn_delay = 60
 
 running = True
 while running:
@@ -215,7 +197,7 @@ while running:
                         running = False
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FPS)
             
         continue
 
@@ -301,7 +283,7 @@ while running:
                     game_state = "playing"
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FPS)
         continue
 
     #Екран програшу
@@ -357,7 +339,7 @@ while running:
                         running = False
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FPS)
         continue
 
     for event in pygame.event.get():
@@ -371,8 +353,8 @@ while running:
 
     #ривок
     if dash_time > 0:
-        player.x += dash_dx * dash_speed
-        player.y += dash_dy * dash_speed
+        player.x += dash_dx * DASH_SPEED
+        player.y += dash_dy * DASH_SPEED
         dash_time -= 1
         #напрямок ривку
         dash_dx = (keys[pygame.K_d] - keys[pygame.K_a])
@@ -386,8 +368,8 @@ while running:
             direction_x = dx
             direction_y = dy
 
-        player.x += dx * speed
-        player.y += dy * speed
+        player.x += dx * PLAYER_SPEED
+        player.y += dy * PLAYER_SPEED
 
     if shoot_cooldown > 0:
         shoot_cooldown -= 1
@@ -414,7 +396,7 @@ while running:
         })
 
         shoot_sound.play()
-        shoot_cooldown = shoot_delay
+        shoot_cooldown = SHOOT_DELAY
            
     for bullet in bullets[:]:
         for enemy in enemies[:]:
@@ -424,8 +406,8 @@ while running:
                 score += 1
                 break
         pygame.draw.rect(screen, (255, 0, 0), bullet["rect"])
-        bullet["rect"].x += bullet["dx"] * 10
-        bullet["rect"].y += bullet["dy"] * 10
+        bullet["rect"].x += bullet["dx"] * BULLET_SPEED
+        bullet["rect"].y += bullet["dy"] * BULLET_SPEED
 
         
     #видалення снарядів
@@ -436,17 +418,17 @@ while running:
 
 
     #кнопка для ривку
-    if keys[pygame.K_e] and dash_cooldown == 0 and dash_time == 0:
-        dash_time = dash_duration
-        dash_cooldown = dash_cooldown_max
+    if keys[pygame.K_e] and DASH_COOLDOWN == 0 and dash_time == 0:
+        dash_time = DASH_DURATION
+        DASH_COOLDOWN = dash_cooldown_max
     
     #Самі вороги
     spawn_timer += 1
     #спавн ворогів
-    if spawn_timer >= spawn_delay:
+    if spawn_timer >= SPAWN_DELAY:
         spawn_timer = 0
 
-        enemy = pygame.Rect(0, 0, enemy_size, enemy_size)
+        enemy = pygame.Rect(0, 0, ENEMY_SIZE, ENEMY_SIZE)
 
         side = random.choice(["top", "bottom", "left", "right"])
 
@@ -468,13 +450,13 @@ while running:
     #рух ворогів
     for enemy in enemies:
         if enemy.x < player.x:
-            enemy.x += enemy_speed
+            enemy.x += ENEMY_SPEED
         if enemy.x > player.x:
-            enemy.x -= enemy_speed
+            enemy.x -= ENEMY_SPEED
         if enemy.y < player.y:
-            enemy.y += enemy_speed
+            enemy.y += ENEMY_SPEED
         if enemy.y > player.y:
-            enemy.y -= enemy_speed
+            enemy.y -= ENEMY_SPEED
 
     #відмальовка ворогів
     for enemy in enemies:
@@ -502,6 +484,6 @@ while running:
     score_text = font.render(f"Рахунок: {score}", True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(FPS)
 
 pygame.quit()
