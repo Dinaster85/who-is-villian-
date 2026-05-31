@@ -1,5 +1,8 @@
 import pygame
 from settings import *
+from entities.player import Player
+from entities.bullet import Bullet
+from entities.enemy import Enemy
 import os
 import random
 import math
@@ -16,9 +19,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 #створення гравця й ворогів
-player = pygame.Rect(400, 300, PLAYER_SIZE, PLAYER_SIZE)
-player_img = resources.get_sprite("alien")
-player_img = pygame.transform.scale(player_img, (PLAYER_SIZE, PLAYER_SIZE))
+player = Player(WIDTH/2, HEIGHT/2, resources.get_sprite("alien"))
 #Вороги
 player_img_normal = resources.get_sprite("alien")
 player_img_normal = pygame.transform.scale(player_img_normal, (PLAYER_SIZE, PLAYER_SIZE))
@@ -46,9 +47,6 @@ menu_bg4 = pygame.transform.scale(menu_bg4, (WIDTH, HEIGHT))
 
 
 #змінні
-dash_time = 0
-dash_cooldown_max = 0
-dash_dx, dash_dy = 0, 0
 game_over = False
 score = 0
 game_state = "menu"
@@ -76,7 +74,7 @@ def reset_game():
     enemies.clear()
     bullets.clear()
 
-    player.center = (WIDTH // 2, HEIGHT // 2)
+    player.rect.center = (WIDTH // 2, HEIGHT // 2)
 
 #снаряд
 bullets = []
@@ -124,6 +122,7 @@ spawn_timer = 0
 
 running = True
 while running:
+    keys = pygame.key.get_pressed()
     #меню
     if game_state == "menu":
         menu_timer += 1
@@ -341,148 +340,104 @@ while running:
         pygame.display.flip()
         clock.tick(FPS)
         continue
-
+    
+    #Гра
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    #фон гри
-    screen.blit(background, (0, 0))
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                #ривок
+                player.start_dash(keys)
 
-    #клавіші
-    keys = pygame.key.get_pressed()
+    ###TIMERS
+    direction_x = player.dir_x
+    direction_y = player.dir_y
 
-    #ривок
-    if dash_time > 0:
-        player.x += dash_dx * DASH_SPEED
-        player.y += dash_dy * DASH_SPEED
-        dash_time -= 1
-        #напрямок ривку
-        dash_dx = (keys[pygame.K_d] - keys[pygame.K_a])
-        dash_dy = (keys[pygame.K_s] - keys[pygame.K_w])
-    else:
-        #базовий васд
-        dx = (keys[pygame.K_d] - keys[pygame.K_a])
-        dy = (keys[pygame.K_s] - keys[pygame.K_w])
+    if shoot_cooldown > 0: shoot_cooldown -= 1
+    spawn_timer += 1
 
-        if dx != 0 or dy != 0:
-            direction_x = dx
-            direction_y = dy
-
-        player.x += dx * PLAYER_SPEED
-        player.y += dy * PLAYER_SPEED
-
-    if shoot_cooldown > 0:
-        shoot_cooldown -= 1
+    ###LOGIC
+    player.update(keys)
 
     #спавн снаряду
     if keys[pygame.K_l] and shoot_cooldown == 0:
-        offset = 25
 
         length = math.hypot(direction_x, direction_y)
+
         if length != 0:
             dx = direction_x / length
             dy = direction_y / length
         else:
             dx, dy = 0, -1
 
-        bullets.append({
-            "rect": pygame.Rect(
-                player.centerx + direction_x * offset,
-                player.centery + direction_y * offset,
-                10, 10
-            ),
-            "dx": dx,
-            "dy": dy
-        })
+        bullets.append(Bullet(
+            player.rect.centerx,
+            player.rect.centery,
+            dx, dy
+        ))
 
         shoot_sound.play()
         shoot_cooldown = SHOOT_DELAY
-           
-    for bullet in bullets[:]:
-        for enemy in enemies[:]:
-            if bullet["rect"].colliderect(enemy):
-                bullets.remove(bullet)
-                enemies.remove(enemy)
-                score += 1
-                break
-        pygame.draw.rect(screen, (255, 0, 0), bullet["rect"])
-        bullet["rect"].x += bullet["dx"] * BULLET_SPEED
-        bullet["rect"].y += bullet["dy"] * BULLET_SPEED
-
         
     #видалення снарядів
     bullets = [
         b for b in bullets
-        if 0 < b["rect"].x < WIDTH and 0 < b["rect"].y < HEIGHT
+        if not b.is_offscreen(WIDTH, HEIGHT)
     ]
-
-
-    #кнопка для ривку
-    if keys[pygame.K_e] and DASH_COOLDOWN == 0 and dash_time == 0:
-        dash_time = DASH_DURATION
-        DASH_COOLDOWN = dash_cooldown_max
     
-    #Самі вороги
-    spawn_timer += 1
     #спавн ворогів
     if spawn_timer >= SPAWN_DELAY:
         spawn_timer = 0
 
-        enemy = pygame.Rect(0, 0, ENEMY_SIZE, ENEMY_SIZE)
-
         side = random.choice(["top", "bottom", "left", "right"])
-
+        ex, ey = 0, 0
         if side == "top":
-            enemy.x = random.randint(0, WIDTH)
-            enemy.y = 0
+            ex = random.randint(0, WIDTH)
         elif side == "bottom":
-            enemy.x = random.randint(0, WIDTH)
-            enemy.y = HEIGHT
+            ex = random.randint(0, WIDTH)
+            ey = HEIGHT
         elif side == "left":
-            enemy.x = 0
-            enemy.y = random.randint(0, HEIGHT)
+            ey = random.randint(0, HEIGHT)
         elif side == "right":
-            enemy.x = WIDTH
-            enemy.y = random.randint(0, HEIGHT)
+            ex = WIDTH
+            ey = random.randint(0, HEIGHT)
 
-        enemies.append(enemy)
+        enemies.append(Enemy(ex,ey,enemy_img_current))
 
     #рух ворогів
     for enemy in enemies:
-        if enemy.x < player.x:
-            enemy.x += ENEMY_SPEED
-        if enemy.x > player.x:
-            enemy.x -= ENEMY_SPEED
-        if enemy.y < player.y:
-            enemy.y += ENEMY_SPEED
-        if enemy.y > player.y:
-            enemy.y -= ENEMY_SPEED
+        enemy.update(player.rect)
 
-    #відмальовка ворогів
-    for enemy in enemies:
-        screen.blit(enemy_img_current, (enemy.x, enemy.y))
+    #Колiзiї
+    for bullet in bullets[:]:
+        for enemy in enemies[:]:
+            if bullet.collides(enemy):
+                bullets.remove(bullet)
+                enemies.remove(enemy)
+                score += 1
+                break
+        bullet.update()
 
-    #смерть гравця
     for enemy in enemies:
-        if player.colliderect(enemy):
+        if enemy.collides(player.rect):
             game_state = "game_over"
-            score = 0
-            enemies.clear()
-            bullets.clear()
-            spawn_timer = 0
-            break
 
-        if game_state == "game_over":
-            continue
-    #краї вікна
-    player.clamp_ip(screen.get_rect())
+    ###RENDERING
+    screen.blit(background, (0, 0))
 
-    #сам гравець
-    screen.blit(player_img, player)
+    for enemy in enemies:
+        enemy.draw(screen)
+
+    for bullet in bullets:
+        bullet.draw(screen)
+    
+    player.draw(screen)
 
     font = pygame.font.Font(None, 36)
     score_text = font.render(f"Рахунок: {score}", True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
+    #END FRAME
     pygame.display.flip()
     clock.tick(FPS)
 
