@@ -41,6 +41,7 @@ shoot_sound = resources.get_sound("shoot")
 #змінні
 score = 0
 game_state = "menu"
+selected = 0
 menu_frame = 0
 menu_timer = 0
 current_x = 242
@@ -158,7 +159,6 @@ while running:
         continue
 
     elif game_state == "character_select":
-        selected = 0
 
         menu_timer += 1
 
