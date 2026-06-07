@@ -38,10 +38,10 @@ class Player:
         self.rect.y += dy * self.speed
         self.clamp_to_screen()
 
-    def start_dash(self, keys):
+    def start_dash(self):
         if self.dash_time == 0:
-            self.dash_dx = keys[pygame.K_d] - keys[pygame.K_a]
-            self.dash_dy = keys[pygame.K_s] - keys[pygame.K_w]
+            self.dash_dx = self.dir_x
+            self.dash_dy = self.dir_y
             self.dash_time = DASH_DURATION
             self.dash_cooldown = 0 # TODO чому???
 
